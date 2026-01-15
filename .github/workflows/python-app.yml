@@ -43,7 +43,7 @@ jobs:
           unzip \
           zip
     
-    - name: Create virtual environment
+    - name: Create and activate virtual environment
       run: |
         python3 -m venv venv
         source venv/bin/activate
@@ -54,6 +54,16 @@ jobs:
         source venv/bin/activate
         pip install buildozer
         pip install cython==0.29.33
+    
+    - name: Check for buildozer.spec
+      run: |
+        source venv/bin/activate
+        if [ ! -f buildozer.spec ]; then
+          echo "buildozer.spec not found. Generating one..."
+          buildozer init
+        else
+          echo "buildozer.spec found."
+        fi
     
     - name: Build APK
       run: |
