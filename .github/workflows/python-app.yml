@@ -6,33 +6,63 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    container:
-      image: beevelop/android:latest  # Android build uchun maxsus image
-      
+  build-apk:
+    runs-on: ubuntu-22.04
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Install dependencies
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    
+    - name: Install system dependencies
       run: |
-        apt-get update
-        apt-get install -y python3-pip python3-venv openjdk-11-jdk
-        
-    - name: Install Buildozer
+        sudo apt-get update
+        sudo apt-get install -y \
+          git \
+          openjdk-11-jdk \
+          python3-pip \
+          python3-venv \
+          zlib1g-dev \
+          libncurses5-dev \
+          libncursesw5-dev \
+          libssl-dev \
+          libffi-dev \
+          libsqlite3-dev \
+          libreadline-dev \
+          libbz2-dev \
+          pkg-config \
+          autoconf \
+          automake \
+          libtool \
+          cmake \
+          libltdl-dev \
+          unzip \
+          zip
+    
+    - name: Create virtual environment
       run: |
-        pip3 install --upgrade pip
-        pip3 install buildozer cython==0.29.33
-        
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip setuptools wheel
+    
+    - name: Install Buildozer in virtual environment
+      run: |
+        source venv/bin/activate
+        pip install buildozer
+        pip install cython==0.29.33
+    
     - name: Build APK
       run: |
-        cd /__w/uzbek-tili-app/uzbek-tili-app
+        source venv/bin/activate
         buildozer android debug
-        
-    - name: Upload APK
+    
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: app-release
-        path: __w/uzbek-tili-app/uzbek-tili-app/bin/*.apk
+        name: uzbek-tili-app
+        path: bin/*.apk
         retention-days: 7
