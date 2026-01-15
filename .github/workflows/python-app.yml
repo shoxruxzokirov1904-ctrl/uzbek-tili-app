@@ -1,18 +1,38 @@
 name: Build APK
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: beevelop/android:latest  # Android build uchun maxsus image
+      
     steps:
-    - uses: actions/checkout@v4
-    - name: Build with Buildozer
-      uses: ArtemSBulgakov/buildozer-action@v1
-      with:
-        workdir: '.'
-        buildozer_version: 'stable'
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y python3-pip python3-venv openjdk-11-jdk
+        
+    - name: Install Buildozer
+      run: |
+        pip3 install --upgrade pip
+        pip3 install buildozer cython==0.29.33
+        
+    - name: Build APK
+      run: |
+        cd /__w/uzbek-tili-app/uzbek-tili-app
+        buildozer android debug
+        
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: package
-        path: bin/*.apk
+        name: app-release
+        path: __w/uzbek-tili-app/uzbek-tili-app/bin/*.apk
+        retention-days: 7
