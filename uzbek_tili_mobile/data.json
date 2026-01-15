@@ -1,0 +1,45 @@
+{
+  "user": {
+    "name": "Foydalanuvchi",
+    "score": 250,
+    "streak": 5,
+    "completed_lessons": 3,
+    "vocabulary_mastered": 45,
+    "join_date": "2024-01-15"
+  },
+  "lessons": [
+    {
+      "id": 1,
+      "title": "Salomlashish",
+      "description": "Asosiy salomlar va tanishish",
+      "level": "boshlang'ich",
+      "duration": 15,
+      "completed": true,
+      "score": 85,
+      "sections": [
+        "Salom - Hello",
+        "Xayr - Goodbye",
+        "Qandaysiz? - How are you?",
+        "Yaxshi - Fine",
+        "Rahmat - Thank you"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Oilaviy so'zlar",
+      "description": "Oila a'zolari va qarindoshlar",
+      "level": "boshlang'ich",
+      "duration": 20,
+      "completed": true,
+      "score": 70,
+      "sections": [
+        "Ota - Father",
+        "Ona - Mother",
+        "Aka - Older brother",
+        "Uka - Younger brother",
+        "Opa - Older sister",
+        "Singil - Younger sister"
+      ]
+    }
+  ]
+}
