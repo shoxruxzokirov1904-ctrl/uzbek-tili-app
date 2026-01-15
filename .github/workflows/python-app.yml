@@ -2,8 +2,7 @@ name: Build APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-apk:
@@ -23,7 +22,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y \
           git \
-          openjdk-11-jdk \
+          openjdk-11-jdk-headless \
           python3-pip \
           python3-venv \
           zlib1g-dev \
@@ -41,38 +40,70 @@ jobs:
           cmake \
           libltdl-dev \
           unzip \
-          zip
+          zip \
+          build-essential \
+          ccache \
+          wget \
+          curl
     
-    - name: Create and activate virtual environment
+    - name: Create virtual environment
       run: |
         python3 -m venv venv
-        source venv/bin/activate
-        pip install --upgrade pip setuptools wheel
+        echo "VIRTUAL_ENV=$PWD/venv" >> $GITHUB_ENV
+        echo "$PWD/venv/bin" >> $GITHUB_PATH
     
-    - name: Install Buildozer in virtual environment
+    - name: Install Buildozer
       run: |
-        source venv/bin/activate
+        . venv/bin/activate
+        pip install --upgrade pip setuptools wheel cython==0.29.33
         pip install buildozer
-        pip install cython==0.29.33
     
-    - name: Check for buildozer.spec
+    - name: Accept Android SDK licenses
       run: |
-        source venv/bin/activate
+        mkdir -p ~/.android
+        echo "### User Sources for Android SDK Manager" > ~/.android/repositories.cfg
+        
+        # Accept all Android SDK licenses
+        yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
+        
+        # Accept licenses using the new method
+        (while sleep 3; do echo "y"; done) | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
+        
+        echo "Android licenses accepted"
+    
+    - name: Initialize Buildozer (first time setup)
+      run: |
+        . venv/bin/activate
+        # Initialize buildozer if not already
         if [ ! -f buildozer.spec ]; then
-          echo "buildozer.spec not found. Generating one..."
           buildozer init
-        else
-          echo "buildozer.spec found."
         fi
     
     - name: Build APK
       run: |
-        source venv/bin/activate
-        buildozer android debug
+        . venv/bin/activate
+        
+        # Accept Android licenses before build
+        mkdir -p ~/.android
+        touch ~/.android/repositories.cfg
+        
+        # Set environment variable to accept SDK licenses
+        export BUILDOZER_ACCEPT_LICENSE=1
+        
+        # Build the APK
+        buildozer -v android debug 2>&1 | tail -100
+        
+        # If first build fails due to license, retry
+        if [ ! -f bin/*.apk ]; then
+          echo "First build attempt failed, retrying with license acceptance..."
+          yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
+          buildozer -v android debug
+        fi
     
-    - name: Upload APK artifact
+    - name: Upload APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: uzbek-tili-app
         path: bin/*.apk
-        retention-days: 7
+        retention-days: 30
